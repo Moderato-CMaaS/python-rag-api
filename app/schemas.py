@@ -9,3 +9,7 @@ class ModerationRequest(BaseModel):
     user_id: str
     text_to_moderate: str
 
+class ModerationResponse(BaseModel):
+    is_violation: bool
+    reason: str
+
