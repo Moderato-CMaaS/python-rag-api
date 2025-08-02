@@ -14,7 +14,9 @@ app = FastAPI(
 
 @app.middleware("http")
 async def check_api_key(request: Request, call_next):
-    if request.url.path == "/": 
+    # Allow unauthenticated access to root and documentation endpoints
+    open_paths = {"/", "/docs", "/redoc", "/openapi.json"}
+    if request.url.path in open_paths:
         return await call_next(request)
     if request.headers.get("X-API-Key") != DOT_NET_API_KEY:
         raise HTTPException(status_code=403, detail="Forbidden: Invalid or missing API key.")
