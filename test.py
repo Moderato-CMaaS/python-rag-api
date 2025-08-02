@@ -22,10 +22,10 @@ def test_gemini_api():
     try:
         resp = requests.post(url, headers=headers, json=data)
         resp.raise_for_status()
-        print("✅ Gemini API is working. Response:")
+        print("Gemini API is working. Response:")
         print(resp.json())
     except Exception as e:
-        print("❌ Gemini API test failed.")
+        print("Gemini API test failed.")
         print(e)
 
 if __name__ == "__main__":
