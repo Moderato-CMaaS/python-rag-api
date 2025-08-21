@@ -153,7 +153,7 @@ def check_moderation(text: str, user_id: str, api_key: str):
         # Query ChromaDB for ALL relevant rules for this API key and user
         results = collection.query(
             query_texts=[text],
-            n_results=5,  # Get top 5 most relevant rules
+            n_results=3,  # Get top 3 most relevant rules
             where={"$and": [{"user_id": user_id}, {"api_key": api_key}]}
         )
         
