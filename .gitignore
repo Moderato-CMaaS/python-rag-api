@@ -4,7 +4,6 @@ chroma_db/
 venv/
 
 # Environment variables
-.env
 # ChromaDB local database files
 chroma/
 chroma.db
@@ -18,7 +17,6 @@ __pycache__/
 *.pyd
 
 # VSCode settings
-.vscode/
 
 # OS generated files
 Thumbs.db
@@ -26,3 +24,7 @@ ehthumbs.db
 Desktop.ini
 .DS_Store
 *.swp
+temp_auto_push.bat
+temp_interactive_push.bat
+config.bat
+node_modules
