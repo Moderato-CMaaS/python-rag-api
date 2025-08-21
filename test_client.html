@@ -171,10 +171,27 @@
                 </div>
                 <div class="form-group">
                     <label for="ruleText">Rule Text:</label>
-                    <textarea id="ruleText" placeholder="Describe the moderation rule...">Do not allow profanity or offensive language</textarea>
+                    <textarea id="ruleText" placeholder="Describe the moderation rule... (Can be multiple paragraphs)" style="height: 120px;">Do not allow profanity or offensive language. This includes but is not limited to swear words, hate speech, discriminatory language, and content that promotes violence or harassment.</textarea>
                 </div>
                 <button onclick="addRule()">Add Rule</button>
                 <div id="addRuleResponse" class="response" style="display: none;"></div>
+            </div>
+
+            <!-- Manage Rules -->
+            <div class="container endpoint-section">
+                <h2>📋 Manage Rules</h2>
+                <div class="form-group">
+                    <label for="manageUserId">User ID:</label>
+                    <input type="text" id="manageUserId" placeholder="e.g., user123" value="test_user" />
+                </div>
+                <button onclick="getUserRules()">List All Rules</button>
+                <button onclick="deleteRule()" style="background-color: #dc3545;">Delete Rule</button>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="deleteRuleId">Rule ID to Delete:</label>
+                    <input type="text" id="deleteRuleId" placeholder="e.g., rule_001" />
+                </div>
+                <div id="manageRulesResponse" class="response" style="display: none;"></div>
             </div>
         </div>
 
@@ -343,6 +360,77 @@
         function loadTestCase(type) {
             if (testCases[type]) {
                 document.getElementById('textToModerate').value = testCases[type];
+            }
+        }
+
+        async function getUserRules() {
+            const apiKey = getApiKey();
+            if (!apiKey) {
+                alert('Please enter an API key first');
+                return;
+            }
+
+            const userId = document.getElementById('manageUserId').value;
+            if (!userId) {
+                alert('Please enter a user ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/rules/${userId}/`, {
+                    method: 'GET',
+                    headers: getHeaders(true)
+                });
+                
+                const data = await response.json();
+                showResponse('manageRulesResponse', {
+                    status: response.status,
+                    data: data
+                }, response.ok);
+                
+            } catch (error) {
+                showError('manageRulesResponse', error);
+            }
+        }
+
+        async function deleteRule() {
+            const apiKey = getApiKey();
+            if (!apiKey) {
+                alert('Please enter an API key first');
+                return;
+            }
+
+            const userId = document.getElementById('manageUserId').value;
+            const ruleId = document.getElementById('deleteRuleId').value;
+            
+            if (!userId || !ruleId) {
+                alert('Please enter both user ID and rule ID');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete rule "${ruleId}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/delete-rule/${ruleId}/?user_id=${userId}`, {
+                    method: 'DELETE',
+                    headers: getHeaders(true)
+                });
+                
+                const data = await response.json();
+                showResponse('manageRulesResponse', {
+                    status: response.status,
+                    data: data
+                }, response.ok);
+                
+                // Clear the rule ID field if deletion was successful
+                if (response.ok) {
+                    document.getElementById('deleteRuleId').value = '';
+                }
+                
+            } catch (error) {
+                showError('manageRulesResponse', error);
             }
         }
 
