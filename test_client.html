@@ -137,6 +137,7 @@
             <h3>API Status: <span id="apiStatus">Checking...</span></h3>
             <p><strong>Base URL:</strong> http://127.0.0.1:8000</p>
             <p><strong>Documentation:</strong> <a href="http://127.0.0.1:8000/docs" target="_blank">Swagger UI</a> | <a href="http://127.0.0.1:8000/redoc" target="_blank">ReDoc</a></p>
+            <p><strong>🔑 Custom API Key System:</strong> Pass your own generated API keys in request bodies to organize different rule sets. Each custom API key maintains isolated rules.</p>
         </div>
 
         <!-- API Key Configuration -->
@@ -166,6 +167,11 @@
                     <input type="text" id="ruleUserId" placeholder="e.g., user123" value="test_user" />
                 </div>
                 <div class="form-group">
+                    <label for="ruleApiKey">Custom API Key:</label>
+                    <input type="text" id="ruleApiKey" placeholder="e.g., sdsdusdhusdhsddsisjidjsdjsdj12223" value="my-app-key-001" />
+                    <small style="color: #666;">Your custom identifier for organizing rule sets</small>
+                </div>
+                <div class="form-group">
                     <label for="ruleId">Rule ID:</label>
                     <input type="text" id="ruleId" placeholder="e.g., rule_001" value="no_profanity" />
                 </div>
@@ -184,7 +190,12 @@
                     <label for="manageUserId">User ID:</label>
                     <input type="text" id="manageUserId" placeholder="e.g., user123" value="test_user" />
                 </div>
-                <button onclick="getUserRules()">List All Rules</button>
+                <div class="form-group">
+                    <label for="manageApiKey">Custom API Key:</label>
+                    <input type="text" id="manageApiKey" placeholder="e.g., sdsdusdhusdhsddsisjidjsdjsdj12223" value="my-app-key-001" />
+                </div>
+                <button onclick="getUserRules()">List User Rules</button>
+                <button onclick="getApiKeyRules()" style="background-color: #28a745;">List All API Key Rules</button>
                 <button onclick="deleteRule()" style="background-color: #dc3545;">Delete Rule</button>
                 
                 <div class="form-group" style="margin-top: 15px;">
@@ -203,6 +214,10 @@
                     <div class="form-group">
                         <label for="moderateUserId">User ID:</label>
                         <input type="text" id="moderateUserId" placeholder="e.g., user123" value="test_user" />
+                    </div>
+                    <div class="form-group">
+                        <label for="moderateApiKey">Custom API Key:</label>
+                        <input type="text" id="moderateApiKey" placeholder="e.g., sdsdusdhusdhsddsisjidjsdjsdj12223" value="my-app-key-001" />
                     </div>
                     <div class="form-group">
                         <label for="textToModerate">Text to Moderate:</label>
@@ -296,10 +311,11 @@
             const ruleData = {
                 user_id: document.getElementById('ruleUserId').value,
                 rule_id: document.getElementById('ruleId').value,
-                rule_text: document.getElementById('ruleText').value
+                rule_text: document.getElementById('ruleText').value,
+                api_key: document.getElementById('ruleApiKey').value
             };
 
-            if (!ruleData.user_id || !ruleData.rule_id || !ruleData.rule_text) {
+            if (!ruleData.user_id || !ruleData.rule_id || !ruleData.rule_text || !ruleData.api_key) {
                 alert('Please fill in all fields');
                 return;
             }
@@ -331,10 +347,11 @@
 
             const moderationData = {
                 user_id: document.getElementById('moderateUserId').value,
-                text_to_moderate: document.getElementById('textToModerate').value
+                text_to_moderate: document.getElementById('textToModerate').value,
+                api_key: document.getElementById('moderateApiKey').value
             };
 
-            if (!moderationData.user_id || !moderationData.text_to_moderate) {
+            if (!moderationData.user_id || !moderationData.text_to_moderate || !moderationData.api_key) {
                 alert('Please fill in all fields');
                 return;
             }
@@ -371,13 +388,15 @@
             }
 
             const userId = document.getElementById('manageUserId').value;
-            if (!userId) {
-                alert('Please enter a user ID');
+            const customApiKey = document.getElementById('manageApiKey').value;
+            
+            if (!userId || !customApiKey) {
+                alert('Please enter both user ID and custom API key');
                 return;
             }
 
             try {
-                const response = await fetch(`${API_BASE}/rules/${userId}/`, {
+                const response = await fetch(`${API_BASE}/rules/${userId}/${customApiKey}/`, {
                     method: 'GET',
                     headers: getHeaders(true)
                 });
@@ -393,6 +412,37 @@
             }
         }
 
+        async function getApiKeyRules() {
+            const apiKey = getApiKey();
+            if (!apiKey) {
+                alert('Please enter an API key first');
+                return;
+            }
+
+            const customApiKey = document.getElementById('manageApiKey').value;
+            if (!customApiKey) {
+                alert('Please enter a custom API key');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api-rules/${customApiKey}/`, {
+                    method: 'GET',
+                    headers: getHeaders(true)
+                });
+                
+                const data = await response.json();
+                showResponse('manageRulesResponse', {
+                    status: response.status,
+                    data: data,
+                    note: "These are ALL rules for this custom API key across all users"
+                }, response.ok);
+                
+            } catch (error) {
+                showError('manageRulesResponse', error);
+            }
+        }
+
         async function deleteRule() {
             const apiKey = getApiKey();
             if (!apiKey) {
@@ -401,10 +451,11 @@
             }
 
             const userId = document.getElementById('manageUserId').value;
+            const customApiKey = document.getElementById('manageApiKey').value;
             const ruleId = document.getElementById('deleteRuleId').value;
             
-            if (!userId || !ruleId) {
-                alert('Please enter both user ID and rule ID');
+            if (!userId || !ruleId || !customApiKey) {
+                alert('Please enter user ID, custom API key, and rule ID');
                 return;
             }
 
@@ -413,7 +464,7 @@
             }
 
             try {
-                const response = await fetch(`${API_BASE}/delete-rule/${ruleId}/?user_id=${userId}`, {
+                const response = await fetch(`${API_BASE}/delete-rule/${ruleId}/?user_id=${userId}&api_key=${customApiKey}`, {
                     method: 'DELETE',
                     headers: getHeaders(true)
                 });
